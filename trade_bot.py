@@ -1,9 +1,9 @@
 import os
 import telebot
 import pandas as pd
-
-import schedule
-import time
+from datetime import datetime
+from time import sleep
+from multiprocessing import Process
 
 import market
 import macd
@@ -13,69 +13,107 @@ import config
 
 bot = telebot.TeleBot(config.TOKEN)
 
-
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_rows', None)
 
 
-# write the last row of each currency in file 'last_data.csv'
-def get_last_data():
-    # write data in csv file
-    for pair in os.listdir('Market'):
-        last_line = pd.read_csv(f"Market/{pair}").tail(1)
-        last_line.to_csv('last_data.csv', index = False, header = False, mode='a')
+class GetData(object):
+    def __init__(self):
+        self.signal = 'macd_signal'
 
-    # write in txt file
-    last_data = pd.read_csv('last_data.csv')
-    with open('last_data.txt', 'w') as F:
-        F.write(last_data.to_string(index=False))
+    # write the last row of each currency in file 'last_data.csv'
+    def get_last_data(self):
+        # write data in csv file
+        for pair in os.listdir('Market'):
+            last_line = pd.read_csv(f"Market/{pair}").tail(1)
+            last_line.to_csv('last_data.csv', index = False, header = False, mode='a')
 
-
-def get_signals(signal):
-    df = pd.read_csv('last_data.csv')
-    # dict with signals; {'BTC-USD': '1.0'...}
-    signals_dict = {row['Pair']: row[signal] for index, row in df.iterrows() if row[signal] != 0.0}
-
-    return signals_dict
+        # write in txt file
+        last_data = pd.read_csv('last_data.csv')
+        with open('last_data.txt', 'w') as F:
+            F.write(last_data.to_string(index=False))
 
 
-# chat_id = message.chat.id
-def send_message():
-    # get existing column names and make an empty 'last_data.csv'
-    col_names = list(pd.read_csv('last_data.csv').columns.values)
-    with open('last_data.csv', 'w') as f:
-        f.write(','.join(col_names) + '\n')
+    def get_signals(self):
+        df = pd.read_csv('last_data.csv')
+        # dict with signals; {'BTC-USD': '1.0'...}
+        signals_dict = {row['Pair']: row[self.signal] for index, row in df.iterrows() if row[self.signal] != 0.0}
 
-    market.main() # get market data
-    macd.main() # get macd and emas values
-    get_last_data() # write the last row of each currency in file
-
-    macd_signals = get_signals('macd_signal') # get a dict where currency is a key and signal is value
-
-    message = '' # the message that will be sent in tg bot
-
-    # create a message and send it
-    for key, value in macd_signals.items():
-        message += str(key) + ': ' + str(value) + '\n'
-    if len(message) > 0:
-        message = "MACD\n--------------------\n{0}\n".format(message)
-
-    print(message)
-
-    if len(message) > 0:
-        bot.send_message(config.chat_id, message)
+        return signals_dict
 
 
-def main():
-    # launch the script every hour
-    # schedule.every().hour.at(":01").do(send_message)
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(1)
+class Main(object):
+    def __init__(self):
+        self.get_data = GetData()
 
-    send_message()
+    # chat_id = message.chat.id
+    def send_message(self, no_s_message):
+        # get existing column names and make an empty 'last_data.csv'
+        col_names = list(pd.read_csv('last_data.csv').columns.values)
+        with open('last_data.csv', 'w') as f:
+            f.write(','.join(col_names) + '\n')
+
+        market.main() # get market data
+        macd.main() # get macd and emas values
+        self.get_data.get_last_data() # write the last row of each currency in file
+
+        macd_signals = self.get_data.get_signals() # get a dict where currency is a key and signal is value
+
+        message = '' # the message that will be sent in tg bot
+
+        # create a message and send it
+        for key, value in macd_signals.items():
+            message += str(key) + ': ' + str(value) + '\n'
+        if len(message) > 0:
+            message = "MACD\n--------------------\n{0}\n".format(message)
+
+        print(message)
+
+        if len(message) > 0:
+            bot.send_message(config.chat_id, message)
+
+         # this message will be sent from bot if no signals
+        if no_s_message:
+            bot.send_message(config.CHAT_ID, no_s_message)
+
+
+#  --- MESSAGE HANDLERS ---
+# list of all available commands
+@bot.message_handler(commands=['help'])
+def help(message):
+    text = '/help - list of commands\n/check - check a market'
+    bot.reply_to(message, text)
+
+
+# if you need to check signals it any time, type '/check' to bot
+@bot.message_handler(commands=['check'])
+def check_market(message):
+    Main().send_message('There is no signals right now') # this message will be sent from bot if no signals
 
 
 
+# --- RUN POLLING AND TIME CHECK CYCLES ---
+
+# every hour in 2 minutes func 'send_message' will receive data, check it for signals and send them if they are
+def runtime():
+    while True:
+        now = datetime.now()
+        if now.minute == 12:
+            Main().send_message(None)
+            sleep(120) # without this it will check signals all the time util minute ends
+        sleep(5)
+
+
+# to take commands polling it shoud be running
+def polling():
+    text = 'Bot is now running. To see available commands: /help'
+    bot.send_message(config.CHAT_ID, text)
+    bot.polling(none_stop=True)
+
+
+# RUN 2 CYCLES SIMULTANEOUSLY
 if __name__ == '__main__':
-    main()
+    pr1 = Process(target=polling) # start polling
+    pr2 = Process(target=runtime) # check time cycle
+    pr1.start()
+    pr2.start()

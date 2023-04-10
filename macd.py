@@ -14,19 +14,19 @@ pd.set_option('mode.chained_assignment', None) # avoiding a copy error
 # to get ema we need to find sma at first
 def get_sma(symbol_df):
     # calculation
-    short_sma = pd.to_numeric(symbol_df['Close'].head(s_ema)).mean()
-    long_sma = pd.to_numeric(symbol_df['Close'].head(l_ema)).mean()
-    sma_200 = pd.to_numeric(symbol_df['Close'].head(ema_200)).mean()
+    short_sma = pd.to_numeric(symbol_df['Close'].head(S_EMA)).mean()
+    long_sma = pd.to_numeric(symbol_df['Close'].head(L_EMA)).mean()
+    sma_200 = pd.to_numeric(symbol_df['Close'].head(EMA_200)).mean()
 
     # creating columns
-    symbol_df[f"{s_ema}ema"] = np.nan
-    symbol_df[f"{l_ema}ema"] = np.nan
-    symbol_df[f"{ema_200}ema"] = np.nan
+    symbol_df[f"{S_EMA}ema"] = np.nan
+    symbol_df[f"{L_EMA}ema"] = np.nan
+    symbol_df[f"{EMA_200}ema"] = np.nan
 
     # write data in columns
-    symbol_df.loc[s_ema - 1, f"{s_ema}ema"] = short_sma
-    symbol_df.loc[l_ema - 1, f"{l_ema}ema"] = long_sma
-    symbol_df.loc[ema_200 - 1, f"{ema_200}ema"] = sma_200
+    symbol_df.loc[S_EMA - 1, f"{S_EMA}ema"] = short_sma
+    symbol_df.loc[L_EMA - 1, f"{L_EMA}ema"] = long_sma
+    symbol_df.loc[EMA_200 - 1, f"{EMA_200}ema"] = sma_200
 
 
 # this func finds ema for all required periods
@@ -50,9 +50,9 @@ def macd_line(symbol_df, index):
 
 # macd signal line is ema of macd line, so it needs to create sma first
 def macd_signal_line_sma(symbol_df):
-    signal_line_sma = pd.to_numeric(symbol_df['macd'].head(m_ema + l_ema - 1)).mean()
+    signal_line_sma = pd.to_numeric(symbol_df['macd'].head(M_EMA + L_EMA - 1)).mean()
     symbol_df['signal_line'] = np.nan
-    symbol_df.loc[m_ema + l_ema - 2, 'signal_line'] = signal_line_sma
+    symbol_df.loc[M_EMA + L_EMA - 2, 'signal_line'] = signal_line_sma
 
 
 # 9 period ema of macd line
@@ -60,7 +60,7 @@ def macd_signal_line(symbol_df, index):
     # calculating macd signal line
     g = index
     for i in range(len(symbol_df) - index):
-        m_multiplier = 2 / (m_ema + 1)
+        m_multiplier = 2 / (M_EMA + 1)
         signal_line = (float(symbol_df.iloc[g]['macd']) * m_multiplier) + (float(symbol_df.iloc[g-1]['signal_line']) * (1 - m_multiplier))
         symbol_df.loc[g, 'signal_line'] = signal_line
         g += 1
@@ -123,9 +123,9 @@ def macd_trade_logic():
             if str(symbol_df.iloc[-1]['macd']) == str(np.nan):
                 new_df = get_new_data(symbol_df)
 
-                get_ema(new_df, s_ema, 1) # short ema
-                get_ema(new_df, l_ema, 1) # long ema
-                get_ema(new_df, ema_200, 1) # 200 ema
+                get_ema(new_df, S_EMA, 1) # short ema
+                get_ema(new_df, L_EMA, 1) # long ema
+                get_ema(new_df, EMA_200, 1) # 200 ema
                 macd_line(new_df, 1)
                 macd_signal_line(new_df, 1)
                 macd_signal(new_df, 1)
@@ -148,13 +148,13 @@ def macd_trade_logic():
         # calculation for all rows
         else:
             get_sma(symbol_df) # first sma (for calculating ema its required the previous ema value, so very first value must be sma)
-            get_ema(symbol_df, s_ema, s_ema) # short ema
-            get_ema(symbol_df, l_ema, l_ema) # long ema
-            get_ema(symbol_df, ema_200, ema_200) # 200 period ema
-            macd_line(symbol_df, l_ema - 1)
+            get_ema(symbol_df, S_EMA, S_EMA) # short ema
+            get_ema(symbol_df, L_EMA, L_EMA) # long ema
+            get_ema(symbol_df, EMA_200, EMA_200) # 200 period ema
+            macd_line(symbol_df, L_EMA - 1)
             macd_signal_line_sma(symbol_df)
-            macd_signal_line(symbol_df, m_ema + l_ema - 1)
-            macd_signal(symbol_df, ema_200 - 1)
+            macd_signal_line(symbol_df, M_EMA + L_EMA - 1)
+            macd_signal(symbol_df, EMA_200 - 1)
 
             # write data in file
             if count > 0:

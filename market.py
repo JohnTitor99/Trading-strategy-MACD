@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import yfinance as yf
 import pandas as pd
 
-import config
+from config import *
 
 
 pd.set_option('display.max_rows', None) # when print a dataframe, it will print all columns, not only first and last 5 by default
@@ -18,7 +18,7 @@ pd.set_option('mode.chained_assignment', None) # avoiding a copy error
 def get_hourly_dataframe(pair, period):
     ticker = yf.Ticker(pair)
 
-    df = ticker.history(period=period, interval=config.interval)
+    df = ticker.history(period=period, interval=INTERVAL)
 
     del df['Volume']
     del df['Dividends']
@@ -64,10 +64,10 @@ def get_new_data(pair):
 
 
 def main():
-    count = len(config.market) -1
+    count = len(MARKET) -1
 
     # write data in files for each currrency
-    for pair in config.market:
+    for pair in MARKET:
         filename = Path(f"Market/{pair}.csv")
 
         # write missing rows until current date if file already exists
@@ -79,7 +79,7 @@ def main():
         
         # create new file if there no file yet and add data by the whole required period
         else:
-            df = get_hourly_dataframe(pair, config.period)
+            df = get_hourly_dataframe(pair, PERIOD)
  
             # df.to_string(f"MarketTXT/{pair}.txt", index=False) # write data without empty rows txt
 
