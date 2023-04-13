@@ -1,13 +1,13 @@
 # ----- BOT CONFIG -----
 
-TOKEN = '6122912690:AAF95dCPgUdN27uNXSgrN4Fzmo9IU-WtWLo'
-CHAT_ID = 862289283
+# put your bot token and message id here
+# TOKEN = ''
+# CHAT_ID = 
 
 
 
 # ----- BASE CONFIG -----
 
-# currencies, crypto, metals, stocks
 MARKET = [
     # currencies
     'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'AUDUSD=X', 'USDCAD=X', 'USDCHF=X', 'NZDUSD=X', 'EURJPY=X',
@@ -25,6 +25,8 @@ MARKET = [
 
 PERIOD = '3mo'
 INTERVAL = '1h'
+
+RUNTIME = 2 # check the market every hour in 2 minute
 
 
 

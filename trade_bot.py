@@ -71,8 +71,10 @@ class Main(object):
 
         if len(message) > 0:
             bot.send_message(config.chat_id, message)
+        else:
+            print('There is no signals right now.')
 
-         # this message will be sent from bot if no signals
+         # this message will be sent from bot if no signals when you check it manually
         if no_s_message:
             bot.send_message(config.CHAT_ID, no_s_message)
 
@@ -88,7 +90,7 @@ def help(message):
 # if you need to check signals it any time, type '/check' to bot
 @bot.message_handler(commands=['check'])
 def check_market(message):
-    Main().send_message('There is no signals right now') # this message will be sent from bot if no signals
+    Main().send_message('There is no signals right now.') # this message will be sent from bot if no signals
 
 
 
@@ -98,7 +100,7 @@ def check_market(message):
 def runtime():
     while True:
         now = datetime.now()
-        if now.minute == 12:
+        if now.minute == config.RUNTIME:
             Main().send_message(None)
             sleep(120) # without this it will check signals all the time util minute ends
         sleep(5)
