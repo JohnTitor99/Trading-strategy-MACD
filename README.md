@@ -6,13 +6,13 @@ There are a lot of trading strategies using technical indicators, like MACD, Sto
 I've made this bot for automatic searching buy and sell signals using MACD indicator. It used for finding situations like below:
 
 Buy:
-![Screenshot](screenshot.png)
+![Screenshot](signal_buy.png)
 
 Sell:
-![Screenshot](screenshot.png)
+![Screenshot](signal_sell.png)
 ## General Info
 
-This bot calculates indicators values for the last 3 month (it needed for getting precise values) using data from YFinanace API. It checks all currencies, crypto, futures and stocks you need every hour and send you in telegram message with currency pair and signal for buying or selling it. It's not perfect, so you need at least learn how this strategy works and look at the chart to see how really good signal is, check support and resistance levels etc. The video with this strategy explanation is at the bottom.
+This bot calculates indicators values for the last 3 month (it needed for getting precise values) using data from YFinanace API. It checks all currencies, crypto, futures and stocks you need every hour and send you in telegram message with currency pair and signal for buying or selling it. It's not perfect, so you need at least learn how this strategy works and look at the chart to see how really good signal is, check support and resistance levels etc. The video with this strategy explanation is at the bottom in 'Sources'.
 ## Strategy Explanation
 
 The strategy use MACD indicator and 200-period EMA. When MACD line (blue) crosses a signal line (red) below the zero line, it's a signal for buying. And when MACD line crosses a signal line above the zero line, then it's sell. But only MACD by itself is not so usefull. When it's downtrend and MACD gives signals for buying, then the most of this will be false signals. So, for avoiding this, we use a 200-period ema, which will help us to define a trend direction. Here's how the all strategy looks like: When MACD line crosses the signal line below the zero line and current price is above 200-period ema (it shows an uptrend), it's a signal for buying. Opposite for selling.
@@ -48,11 +48,11 @@ Than install project dependencies
 ```shell
 pip install -r requirements.txt
 ```
-It is presumed that you have obtained an [API token with @BotFather](https://core.telegram.org/bots#botfather)
+It is presumed that you have obtained an [API token with @BotFather](https://core.telegram.org/bots#botfather).
 
 Now put your token in config.py file in variable 'TOKEN'. And put your message id in 'CHAT_ID'.
 
-Then you can now run file 'trade_bot.py'. If you've done everything good, you'll receive a message from bot: 'Bot is now running. To see available commands: /help'.
-# Sources
+Then you can run file 'trade_bot.py'. If you've done everything good, you'll receive a message from bot: 'Bot is now running. To see available commands: /help'.
+## Sources
 
 The strategy used in this bot was taken from this [video](https://www.youtube.com/watch?v=rf_EQvubKlk&list=LL&index=1).
