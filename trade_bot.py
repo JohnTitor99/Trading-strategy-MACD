@@ -70,7 +70,7 @@ class Main(object):
         print(message)
 
         if len(message) > 0:
-            bot.send_message(config.chat_id, message)
+            bot.send_message(config.CHAT_ID, message)
         else:
             print('There is no signals right now.')
 
